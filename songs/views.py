@@ -1,3 +1,58 @@
-from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.csrf import csrf_exempt
 
-# Create your views here.
+from songs.services.song_service import SongService
+from songs.services.song_upload import SongController
+from utils.response_handler import StreamingService
+from api_latency.latency import measure_latency
+
+s = SongService()
+u = SongController()
+st = StreamingService()
+
+
+@require_GET
+def get_songs(request):
+    songs = s.get_all_songs()
+    return JsonResponse(songs, safe=False)
+
+
+@measure_latency
+def play_song(request, song_id):
+    song_url = s.get_song_url(song_id)
+
+    if not song_url:
+        return JsonResponse({"error": "Not found"}, status=404)
+
+    return st.stream_song(song_url)
+
+
+def search_song(request):
+    song_name = request.GET.get("title")
+
+    if not song_name:
+        return JsonResponse({"error": "title query parameter required"}, status=400)
+
+    songs = s.get_song_by_title(song_name)
+
+    if not songs:
+        return JsonResponse({"message": "No songs found"}, status=404)
+
+    return JsonResponse(songs, safe=False)
+
+
+@csrf_exempt
+@require_POST
+def upload_song(request):
+    return u.upload_song(request)
+
+
+from django.http import JsonResponse
+from services.song_service import SongService
+
+s = SongService()
+
+def get_users(request):
+    users = s.get_all_users()
+    return JsonResponse(users, safe=False)
