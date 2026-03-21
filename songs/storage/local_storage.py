@@ -1,6 +1,6 @@
 import os
 import uuid
-from config import Config
+from songs.config import Config
 
 
 class LocalStorage:

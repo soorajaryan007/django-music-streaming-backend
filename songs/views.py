@@ -4,8 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from songs.services.song_service import SongService
 from songs.services.song_upload import SongController
-from utils.response_handler import StreamingService
-from api_latency.latency import measure_latency
+from songs.utils.response_handler import StreamingService
+from songs.api_latency.latency import measure_latency
 
 s = SongService()
 u = SongController()
@@ -48,10 +48,6 @@ def upload_song(request):
     return u.upload_song(request)
 
 
-from django.http import JsonResponse
-from services.song_service import SongService
-
-s = SongService()
 
 def get_users(request):
     users = s.get_all_users()

@@ -1,14 +1,14 @@
-from config import Config
+from songs.config import Config
 
 
 class StorageFactory:
 
     def __init__(self):
         if Config.STORAGE_TYPE == "s3":
-            from storage.s3_storage import S3Storage
+            from songs.storage.s3_storage import S3Storage
             self.storage = S3Storage()
         else:
-            from storage.local_storage import LocalStorage
+            from songs.storage.local_storage import LocalStorage
             self.storage = LocalStorage()
 
     def save_audio_file(self, file):

@@ -26,5 +26,4 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", health_check),
     path("", include("songs.urls")),
-    path("", include("users.urls")),
 ]
