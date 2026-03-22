@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 
-from songs.models import Song,User
+from songs.models import Song
+from users.models import User
 from songs.cache.redis_cache import RedisCache
 from songs.repositories.song_repository import SongRepository
 

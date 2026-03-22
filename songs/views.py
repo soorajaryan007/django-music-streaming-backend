@@ -42,15 +42,9 @@ def search_song(request):
     return JsonResponse(songs, safe=False)
 
 
-from django.http import JsonResponse
 
 @csrf_exempt
 @require_POST
 def upload_song(request):
     response, status = u.upload_song(request)
     return JsonResponse(response, status=status)
-
-
-def get_users(request):
-    users = s.get_all_users()
-    return JsonResponse(users, safe=False)
