@@ -1,5 +1,6 @@
 import os
 import uuid
+from django.conf import settings
 from songs.config import Config
 
 
@@ -10,14 +11,13 @@ class LocalStorage:
         os.makedirs(self.upload_folder, exist_ok=True)
 
     def save_audio_file(self, file):
-        ext = file.name.split('.')[-1]
-        filename = f"{uuid.uuid4()}.{ext}"
-        
-        file_path = os.path.join(self.upload_folder, filename)
+        filename = f"{uuid.uuid4()}.mp3"
+
+        file_path = os.path.join(settings.MEDIA_ROOT, filename)
 
         with open(file_path, 'wb+') as destination:
             for chunk in file.chunks():
                 destination.write(chunk)
 
-        return file_path
-        
+        return file_path   # ✅ absolute path
+                

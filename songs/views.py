@@ -21,7 +21,7 @@ def get_songs(request):
 @measure_latency
 def play_song(request, song_id):
     song_url = s.get_song_url(song_id)
-
+    print("Song URL:", song_url)
     if not song_url:
         return JsonResponse({"error": "Not found"}, status=404)
 
