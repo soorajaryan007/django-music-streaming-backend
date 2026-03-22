@@ -1,83 +1,67 @@
-import json
+import logging
 
-from django.http import JsonResponse
-from django.contrib.auth.hashers import make_password, check_password
-from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.hashers import check_password
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework import status
 
 from users.models import User
+from users.serializers import RegisterSerializer, LoginSerializer
 from users.utils.jwt import generate_token
 
+logger = logging.getLogger(__name__)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_users(request):
     users = User.objects.all()[:20]
 
     data = [
         {"id": u.id, "username": u.username, "email": u.email}
         for u in users
-    ] 
+    ]
 
-    return JsonResponse(data, safe=False)
+    return Response(data, status=status.HTTP_200_OK)
 
 
-
-@csrf_exempt
+@api_view(['POST'])
 def register_user(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    serializer = RegisterSerializer(data=request.data)
 
-    try:
-        body = json.loads(request.body)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        username = body.get("username")
-        email = body.get("email")
-        password = body.get("password")
+    user = serializer.save()
 
-        if not username or not email or not password:
-            return JsonResponse({"error": "All fields required"}, status=400)
+    return Response({
+        "message": "User registered successfully",
+        "user_id": user.id
+    }, status=status.HTTP_201_CREATED)
 
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({"error": "Email already exists"}, status=400)
 
-        user = User.objects.create(
-            username=username,
-            email=email,
-            password=make_password(password)  # 🔥 hashed
+@api_view(['POST'])
+def login_user(request):
+    serializer = LoginSerializer(data=request.data)
+
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    email = serializer.validated_data['email']
+    password = serializer.validated_data['password']
+
+    user = User.objects.filter(email=email).first()
+
+    if not user or not check_password(password, user.password):
+        return Response(
+            {"error": "Invalid credentials"},
+            status=status.HTTP_401_UNAUTHORIZED
         )
 
-        return JsonResponse({
-            "message": "User registered successfully",
-            "user_id": user.id
-        })
+    token = generate_token(user)
 
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
-    
-
-
-@csrf_exempt
-def login_user(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
-
-    try:
-        body = json.loads(request.body)
-
-        email = body.get("email")
-        password = body.get("password")
-
-        user = User.objects.filter(email=email).first()
-
-        if not user:
-            return JsonResponse({"error": "User not found"}, status=404)
-
-        if not check_password(password, user.password):
-            return JsonResponse({"error": "Invalid password"}, status=400)
-
-        token = generate_token(user)
-
-        return JsonResponse({
-            "message": "Login successful",
-            "token": token
-        })
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+    return Response({
+        "message": "Login successful",
+        "token": token
+    }, status=status.HTTP_200_OK)

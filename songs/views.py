@@ -1,6 +1,10 @@
-from django.http import JsonResponse
-from django.views.decorators.http import require_GET, require_POST
-from django.views.decorators.csrf import csrf_exempt
+import logging
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from songs.services.song_service import SongService
 from songs.services.song_upload import SongController
@@ -8,64 +12,63 @@ from songs.utils.response_handler import StreamingService
 from songs.api_latency.latency import measure_latency
 
 
+logger = logging.getLogger(__name__)
+
 s = SongService()
 u = SongController()
 st = StreamingService()
 
 
-@require_GET
+# 🎵 Get all songs (public)
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def get_songs(request):
     songs = s.get_all_songs()
-    return JsonResponse(songs, safe=False)
+    return Response(songs, status=status.HTTP_200_OK)
 
 
+# ▶️ Play song (public)
+@api_view(['GET'])
+@permission_classes([AllowAny])
 @measure_latency
 def play_song(request, song_id):
     song_url = s.get_song_url(song_id)
-    print("Song URL:", song_url)
+
     if not song_url:
-        return JsonResponse({"error": "Not found"}, status=404)
+        return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
     return st.stream_song(song_url)
 
 
+# 🔍 Search songs (public)
+@api_view(['GET'])
+@permission_classes([AllowAny])
 def search_song(request):
-    song_name = request.GET.get("title")
+    song_name = request.query_params.get("title")
 
     if not song_name:
-        return JsonResponse({"error": "title query parameter required"}, status=400)
+        return Response(
+            {"error": "title query parameter required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     songs = s.get_song_by_title(song_name)
 
     if not songs:
-        return JsonResponse({"message": "No songs found"}, status=404)
+        return Response(
+            {"message": "No songs found"},
+            status=status.HTTP_404_NOT_FOUND
+        )
 
-    return JsonResponse(songs, safe=False)
+    return Response(songs, status=status.HTTP_200_OK)
 
 
-
-@csrf_exempt
-@require_POST
+# ⬆️ Upload song (protected)
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def upload_song(request):
-    response, status = u.upload_song(request)
-    return JsonResponse(response, status=status)
-
-
-
-
-
-@csrf_exempt
-@require_POST
-def upload_song(request):
-
-    # 🔒 Step 1: Check authentication
-    if not request.user:
-        return JsonResponse({"error": "Unauthorized"}, status=401)
-
-    # 🔥 Step 2: Use user from JWT (NOT from request)
     user = request.user
 
-    # 🎵 Step 3: Proceed with upload
-    response, status = u.upload_song(request, user)
+    response, status_code = u.upload_song(request, user)
 
-    return JsonResponse(response, status=status)
+    return Response(response, status=status_code)
