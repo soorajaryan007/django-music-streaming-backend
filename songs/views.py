@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.csrf import csrf_exempt
 
@@ -6,7 +6,7 @@ from songs.services.song_service import SongService
 from songs.services.song_upload import SongController
 from songs.utils.response_handler import StreamingService
 from songs.api_latency.latency import measure_latency
-from users.models import User
+
 
 s = SongService()
 u = SongController()
