@@ -10,7 +10,9 @@ class LocalStorage:
         os.makedirs(self.upload_folder, exist_ok=True)
 
     def save_audio_file(self, file):
-        filename = f"{uuid.uuid4()}.mp3"
+        ext = file.name.split('.')[-1]
+        filename = f"{uuid.uuid4()}.{ext}"
+        
         file_path = os.path.join(self.upload_folder, filename)
 
         with open(file_path, 'wb+') as destination:

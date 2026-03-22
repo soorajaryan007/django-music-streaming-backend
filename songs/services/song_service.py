@@ -1,3 +1,5 @@
+from django.core.exceptions import ObjectDoesNotExist
+
 from songs.models import Song,User
 from songs.cache.redis_cache import RedisCache
 from songs.repositories.song_repository import SongRepository
@@ -35,7 +37,7 @@ class SongService:
 
         songs = Song.objects.filter(title__icontains=song_name)
 
-        if not songs:
+        if not songs.exists():
             return None
 
         return [
@@ -50,9 +52,12 @@ class SongService:
             for s in songs
         ]
 
+
     def get_song_id(self, song_id):
-        song = Song.objects.get(id=song_id)
-        return song
+        try:
+            return Song.objects.get(id=song_id)
+        except ObjectDoesNotExist:
+            return None
 
     def create_song(self, title, artist, genre, mp3_path):
 

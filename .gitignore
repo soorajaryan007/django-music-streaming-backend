@@ -1,2 +1,4 @@
 .env
 .venv/
+songs/__pycache__/
+songs/storage/__pycache__/
