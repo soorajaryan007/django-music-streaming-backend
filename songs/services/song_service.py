@@ -60,13 +60,14 @@ class SongService:
         except ObjectDoesNotExist:
             return None
 
-    def create_song(self, title, artist, genre, mp3_path):
+    def create_song(self, title, artist, genre, mp3_path,user):
 
         song = Song(
             title=title,
             artist=artist,
             genre=genre,
-            mp3_path=mp3_path
+            mp3_path=mp3_path,
+            uploaded_by=user
         )
 
         song.save()

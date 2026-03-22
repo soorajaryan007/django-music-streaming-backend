@@ -6,6 +6,7 @@ from songs.services.song_service import SongService
 from songs.services.song_upload import SongController
 from songs.utils.response_handler import StreamingService
 from songs.api_latency.latency import measure_latency
+from users.models import User
 
 s = SongService()
 u = SongController()
@@ -47,4 +48,24 @@ def search_song(request):
 @require_POST
 def upload_song(request):
     response, status = u.upload_song(request)
+    return JsonResponse(response, status=status)
+
+
+
+
+
+@csrf_exempt
+@require_POST
+def upload_song(request):
+
+    # 🔒 Step 1: Check authentication
+    if not request.user:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    # 🔥 Step 2: Use user from JWT (NOT from request)
+    user = request.user
+
+    # 🎵 Step 3: Proceed with upload
+    response, status = u.upload_song(request, user)
+
     return JsonResponse(response, status=status)

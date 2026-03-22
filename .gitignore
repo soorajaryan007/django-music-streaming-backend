@@ -2,3 +2,12 @@
 .venv/
 songs/__pycache__/
 songs/storage/__pycache__/
+root/__pycache__/
+songs/__pycache__/
+songs/migrations/__pycache__/
+songs/services/__pycache__/
+users/__pycache__/
+users/middleware/__pycache__/
+users/migrations/__pycache__/
+users/utils/__pycache__/
+media/
