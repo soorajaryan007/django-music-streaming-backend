@@ -1,343 +1,275 @@
-## 🎧 Django Music Streaming Backend
+# 🎵 Django Spotify Clone — Scalable Backend Architecture
 
-A scalable backend prototype of a **Spotify-like music streaming service** built using **Django, PostgreSQL, and Django ORM**.
+A production-oriented backend system for a music streaming platform built using **Django + Django REST Framework (DRF)**.
 
-This project implements a backend system responsible for **user management, song metadata storage, file uploads, and audio streaming**.
-
-It is designed as a **modular and production-ready foundation** that can scale with technologies like **Redis, AWS S3, CDN, and microservices**.
-
----
-
-# 🏗 Architecture Overview
-
-This system follows a **layered backend architecture**:
-
-### Core Responsibilities
-
-* User management
-* Song metadata storage
-* File upload & storage
-* Music streaming APIs
-
----
-
-### System Flow
-
-```
-Users
-   ↓
-Django Server (Gunicorn)
-   ↓
-Business Logic (Services Layer)
-   ↓
-Storage Layer (Local / S3)
-   ↓
-PostgreSQL Database
-```
+This project is designed with **clean architecture principles**, separating concerns into **API layer, service layer, repository layer, and storage layer**.
 
 ---
 
 # 🚀 Features
 
-* REST API built with Django
-* PostgreSQL relational database
-* Django ORM for database operations
-* MP3 file upload support
-* Audio streaming endpoint
-* Modular architecture (services, storage separation)
-* Clean and scalable backend design
+* 🔐 JWT-based Authentication
+* 🎵 Song Upload & Streaming
+* 📦 Storage abstraction (Local + S3 ready)
+* ⚡ Redis caching support
+* ⏱️ API latency tracking
+* 🧠 Service-oriented architecture
+* 🔒 Secure APIs with permissions & throttling
 
 ---
 
-# 🧰 Tech Stack
+# 🏗️ Architecture Overview
 
-### Backend Framework
-
-**Django**
-
-### Database
-
-**PostgreSQL**
-
-### ORM
-
-**Django ORM**
-
-### Programming Language
-
-**Python**
-
-### API Testing
-
-**Postman / Curl**
-
-### Version Control
-
-**Git**
+```text
+Client 🌍
+   ↓
+DRF API Layer (Views)
+   ↓
+Service Layer (Business Logic)
+   ↓
+Repository Layer (DB Access)
+   ↓
+Database / Storage (PostgreSQL / S3 / Local)
+```
 
 ---
 
-# 📁 Project Structure
+# 📂 Project Structure
 
 ```
-django-spotify/
+.
+├── root/                  # Core Django project
+│   ├── settings/          # Environment-based settings
+│   │   ├── base.py
+│   │   ├── local.py
+│   │   └── production.py
 │
-├── manage.py
-├── root/
-│   ├── settings.py
-│   ├── urls.py
+├── users/                 # Authentication & user management
+│   ├── models.py
+│   ├── serializers.py
+│   ├── authentication.py  # JWT authentication
+│   ├── utils/jwt.py       # Token generation & decoding
+│   └── views.py
 │
-├── songs/
+├── songs/                 # Song domain
 │   ├── models.py
 │   ├── views.py
-│   ├── urls.py
-│   │
-│   ├── services/
-│   │   └── song_service.py
-│   │
-│   ├── repositories/
-│   │   └── song_repository.py
-│   │
-│   ├── storage/
-│   │   ├── local_storage.py
-│   │   ├── s3_storage.py
-│   │   └── storage_factory.py
-│   │
-│   ├── utils/
-│   │   └── response_handler.py
-│   │
-│   ├── migrations/
-│   └── admin.py
+│   ├── services/          # Business logic
+│   ├── repositories/      # DB abstraction
+│   ├── storage/           # Storage layer (Local/S3)
+│   ├── cache/             # Redis caching
+│   ├── api_latency/       # Performance tracking
+│   └── utils/             # Helpers
 │
-└── media/   # Uploaded audio files
+├── media/                 # Uploaded songs (local storage)
+├── requirements.txt
+└── manage.py
 ```
 
 ---
 
-# 🔌 API Endpoints
+# 🧠 Layered Architecture
 
-### Health Check
+## 1️⃣ API Layer (Views)
 
-```
-GET /
-```
+* Handles HTTP requests
+* Applies authentication, permissions, throttling
+* Delegates logic to services
 
-Response:
+Example:
 
-```json
-{
-  "message": "Django Spotify Backend Running 🎵"
-}
-```
-
----
-
-### Upload Song
-
-```
-POST /upload-song
-```
-
-Form Data:
-
-* title
-* artist
-* genre
-* file (mp3)
-
-Response:
-
-```json
-{
-  "id": 1,
-  "title": "Song Name",
-  "artist": "Artist",
-  "genre": "Genre"
-}
+```python
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_song(request):
+    return service.upload_song(...)
 ```
 
 ---
 
-### Get All Songs
+## 2️⃣ Service Layer (Core Logic)
 
-```
-GET /songs
-```
+* Contains business rules
+* Orchestrates repository + storage
 
-Response:
+Example:
 
-```json
-[
-  {
-    "id": 1,
-    "title": "Song Name",
-    "artist": "Artist",
-    "genre": "Genre",
-    "mp3_path": "/media/xyz.mp3"
-  }
-]
+```python
+song_service.upload_song()
 ```
 
 ---
 
-### Stream Song
+## 3️⃣ Repository Layer
 
-```
-GET /play/<song_id>
-```
-
-Streams the requested MP3 file.
+* Handles database operations
+* Keeps ORM isolated from business logic
 
 ---
 
-# 🗄 Database Schema
+## 4️⃣ Storage Layer
 
-### Users Table
+* Abstracts file storage
+* Supports:
 
-| Column     | Type            |
-| ---------- | --------------- |
-| id         | Integer (PK)    |
-| username   | String (unique) |
-| email      | String (unique) |
-| created_at | DateTime        |
+  * Local storage
+  * AWS S3 (pluggable)
 
 ---
 
-### Songs Table
+## 5️⃣ Authentication Layer
 
-| Column     | Type         |
-| ---------- | ------------ |
-| id         | Integer (PK) |
-| title      | String       |
-| artist     | String       |
-| genre      | String       |
-| mp3_path   | String       |
-| created_at | DateTime     |
+* Custom JWT authentication (`users.authentication.JWTAuthentication`)
+* Integrated with DRF
+* Stateless and scalable
 
 ---
 
-# ⚙️ Setup Instructions
+# 🔐 Authentication Flow
 
-## 1. Clone Repository
-
+```text
+Client → Login → JWT Token
+        ↓
+Request with Authorization Header
+        ↓
+JWT Authentication
+        ↓
+request.user populated
+        ↓
+Permission check (IsAuthenticated)
 ```
-git clone https://github.com/yourusername/django-spotify.git
+
+---
+
+# ⚙️ Key Design Decisions
+
+## ✅ DRF-first architecture
+
+* Removed Django middleware-based auth
+* Centralized authentication in DRF
+
+## ✅ Service-Oriented Design
+
+* Views are thin
+* Business logic isolated
+
+## ✅ Storage Abstraction
+
+* Easily switch between local and S3
+
+## ✅ Environment-based settings
+
+* `base.py`, `local.py`, `production.py`
+
+---
+
+# 🔥 Performance & Scaling
+
+* Throttling enabled:
+
+  * `UserRateThrottle`
+* Redis caching support (extensible)
+* API latency tracking middleware
+
+---
+
+# 🛠️ Setup Instructions
+
+## 1️⃣ Clone repo
+
+```bash
+git clone <repo-url>
 cd django-spotify
 ```
 
 ---
 
-## 2. Create Virtual Environment
+## 2️⃣ Create virtual environment
 
-```
+```bash
 python -m venv .venv
 source .venv/bin/activate
 ```
 
-Windows:
-
-```
-.venv\Scripts\activate
-```
-
 ---
 
-## 3. Install Dependencies
+## 3️⃣ Install dependencies
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-## 4. Configure Database
+## 4️⃣ Configure environment
 
-Update `settings.py`:
+Create `.env`:
 
-```python
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "spotify_clone",
-        "USER": "user",
-        "PASSWORD": "password",
-        "HOST": "localhost",
-        "PORT": "5433",
-    }
-}
+```env
+DB_NAME=spotify_clone
+DB_USER=user
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5433
+
+SECRET_KEY=your_secret_key
 ```
 
 ---
 
-## 5. Run Migrations
+## 5️⃣ Run migrations
 
-```
-python manage.py makemigrations
-python manage.py migrate
-```
-
----
-
-## 6. Create Media Folder
-
-```
-mkdir media
+```bash
+python manage.py migrate --settings=root.settings.local
 ```
 
 ---
 
-## 7. Run Server
+## 6️⃣ Start server
 
-```
-python manage.py runserver
-```
-
-Server runs at:
-
-```
-http://127.0.0.1:8000
+```bash
+python manage.py runserver --settings=root.settings.local
 ```
 
 ---
 
-# 🎯 Usage
+# 📡 API Endpoints
 
-* Upload songs via API (Postman)
-* Store metadata in PostgreSQL
-* Stream songs directly via endpoint
+## 🔐 Auth
 
----
+* `POST /login/`
+* `POST /register/`
 
-# ☁️ Future Improvements
+## 🎵 Songs
 
-* Redis caching layer
-* AWS S3 storage integration
-* CDN for fast streaming
-* JWT authentication
-* User playlists
-* Recommendation engine
-* Microservices architecture
+* `GET /songs/`
+* `GET /songs/search/`
+* `POST /songs/upload/` (Auth required)
+* `GET /songs/<id>/play/`
 
 ---
 
-# 🎯 Learning Goals
+# 🧪 Future Improvements
+
+* Refresh tokens
+* Role-based permissions (Artist/Admin/User)
+* Distributed caching (Redis cluster)
+* Async processing (Celery)
+* CDN integration for media delivery
+
+---
+
+# 🧠 Key Learning Highlights
 
 This project demonstrates:
 
-* Backend system design
-* Django architecture
-* File handling & streaming
-* Database modeling
-* Scalable backend patterns
+* Clean architecture in Django
+* DRF internals (auth, permissions, throttling)
+* Separation of concerns
+* Scalable backend design patterns
 
 ---
 
 # 👨‍💻 Author
 
-**Sooraj Aryan**
-
----
-
-# 📄 License
-
-MIT License
+Built with focus on **system design + backend engineering fundamentals**.
