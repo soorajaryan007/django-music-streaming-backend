@@ -1,20 +1,33 @@
-# 🎵 Django Spotify Clone — Scalable Backend Architecture
+
+````md
+# 🎧 AI Music Streaming Backend — Django + DRF
 
 A production-oriented backend system for a music streaming platform built using **Django + Django REST Framework (DRF)**.
 
-This project is designed with **clean architecture principles**, separating concerns into **API layer, service layer, repository layer, and storage layer**.
+Designed with **clean architecture principles**, this project separates concerns into **API, service, repository, and storage layers**, and integrates **AI-powered natural language search** using Groq.
 
 ---
 
 # 🚀 Features
 
-* 🔐 JWT-based Authentication
-* 🎵 Song Upload & Streaming
-* 📦 Storage abstraction (Local + S3 ready)
-* ⚡ Redis caching support
-* ⏱️ API latency tracking
-* 🧠 Service-oriented architecture
-* 🔒 Secure APIs with permissions & throttling
+### 🎵 Core Backend
+- Song upload & streaming APIs
+- JWT-based authentication
+- Secure APIs with permissions & throttling
+- Storage abstraction (Local + S3 ready)
+
+### 🔍 Search System
+- **v1:** Keyword-based search  
+- **v2:** Natural language search using LLM (Groq)
+
+### ⚡ Performance & Observability
+- API latency tracking
+- Redis caching support (extensible)
+
+### 🧠 Architecture
+- Service-oriented design
+- Clean separation of concerns
+- Scalable backend patterns
 
 ---
 
@@ -30,7 +43,7 @@ Service Layer (Business Logic)
 Repository Layer (DB Access)
    ↓
 Database / Storage (PostgreSQL / S3 / Local)
-```
+````
 
 ---
 
@@ -47,81 +60,84 @@ Database / Storage (PostgreSQL / S3 / Local)
 ├── users/                 # Authentication & user management
 │   ├── models.py
 │   ├── serializers.py
-│   ├── authentication.py  # JWT authentication
-│   ├── utils/jwt.py       # Token generation & decoding
+│   ├── authentication.py
+│   ├── utils/jwt.py
 │   └── views.py
 │
 ├── songs/                 # Song domain
 │   ├── models.py
 │   ├── views.py
-│   ├── services/          # Business logic
-│   ├── repositories/      # DB abstraction
-│   ├── storage/           # Storage layer (Local/S3)
-│   ├── cache/             # Redis caching
-│   ├── api_latency/       # Performance tracking
-│   └── utils/             # Helpers
+│   ├── services/
+│   ├── repositories/
+│   ├── storage/
+│   ├── cache/
+│   ├── api_latency/
+│   └── utils/
 │
-├── media/                 # Uploaded songs (local storage)
+├── media/
 ├── requirements.txt
 └── manage.py
 ```
 
 ---
 
-# 🧠 Layered Architecture
+# 🔍 Search APIs
 
-## 1️⃣ API Layer (Views)
+## v1 — Keyword Search
 
-* Handles HTTP requests
-* Applies authentication, permissions, throttling
-* Delegates logic to services
+```http
+GET /api/v1/search/?title=bhala
+```
 
-Example:
+* Uses Django ORM (`icontains`)
+* Fast and deterministic
 
-```python
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def upload_song(request):
-    return service.upload_song(...)
+---
+
+## v2 — Natural Language Search (Groq)
+
+```http
+GET /api/v2/search/?q=romantic songs
+```
+
+### Flow:
+
+```text
+User Query
+   ↓
+LLM (Groq)
+   ↓
+Structured Filters
+   ↓
+Django ORM
+   ↓
+Results
+```
+
+Example response:
+
+```json
+{
+  "version": "v2",
+  "query": "romantic songs",
+  "interpreted_filters": {
+    "title": "romantic",
+    "genre": "romantic"
+  },
+  "results": [...]
+}
 ```
 
 ---
 
-## 2️⃣ Service Layer (Core Logic)
+# 🧠 AI Integration
 
-* Contains business rules
-* Orchestrates repository + storage
+* Uses **Groq (LLM inference)** for query understanding
+* Converts natural language → structured filters
+* Hybrid system:
 
-Example:
-
-```python
-song_service.upload_song()
-```
-
----
-
-## 3️⃣ Repository Layer
-
-* Handles database operations
-* Keeps ORM isolated from business logic
-
----
-
-## 4️⃣ Storage Layer
-
-* Abstracts file storage
-* Supports:
-
-  * Local storage
-  * AWS S3 (pluggable)
-
----
-
-## 5️⃣ Authentication Layer
-
-* Custom JWT authentication (`users.authentication.JWTAuthentication`)
-* Integrated with DRF
-* Stateless and scalable
+  * Short queries → keyword search
+  * Complex queries → LLM-powered parsing
 
 ---
 
@@ -136,40 +152,37 @@ JWT Authentication
         ↓
 request.user populated
         ↓
-Permission check (IsAuthenticated)
+Permission check
 ```
 
 ---
 
 # ⚙️ Key Design Decisions
 
-## ✅ DRF-first architecture
+### ✅ DRF-first architecture
 
-* Removed Django middleware-based auth
-* Centralized authentication in DRF
+* Authentication handled via DRF (no middleware coupling)
 
-## ✅ Service-Oriented Design
+### ✅ Service-Oriented Design
 
-* Views are thin
-* Business logic isolated
+* Thin views, logic in services
 
-## ✅ Storage Abstraction
+### ✅ Storage Abstraction
 
 * Easily switch between local and S3
 
-## ✅ Environment-based settings
+### ✅ Versioned APIs
 
-* `base.py`, `local.py`, `production.py`
+* v1: deterministic search
+* v2: AI-powered search
 
 ---
 
 # 🔥 Performance & Scaling
 
-* Throttling enabled:
-
-  * `UserRateThrottle`
-* Redis caching support (extensible)
-* API latency tracking middleware
+* DRF throttling (`UserRateThrottle`)
+* Redis caching support
+* Latency tracking for endpoints
 
 ---
 
@@ -182,8 +195,6 @@ git clone <repo-url>
 cd django-spotify
 ```
 
----
-
 ## 2️⃣ Create virtual environment
 
 ```bash
@@ -191,15 +202,11 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
----
-
 ## 3️⃣ Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
-
----
 
 ## 4️⃣ Configure environment
 
@@ -213,17 +220,14 @@ DB_HOST=localhost
 DB_PORT=5433
 
 SECRET_KEY=your_secret_key
+GROQ_API_KEY=your_groq_key
 ```
-
----
 
 ## 5️⃣ Run migrations
 
 ```bash
 python manage.py migrate --settings=root.settings.local
 ```
-
----
 
 ## 6️⃣ Start server
 
@@ -243,7 +247,8 @@ python manage.py runserver --settings=root.settings.local
 ## 🎵 Songs
 
 * `GET /songs/`
-* `GET /songs/search/`
+* `GET /api/v1/search/`
+* `GET /api/v2/search/`
 * `POST /songs/upload/` (Auth required)
 * `GET /songs/<id>/play/`
 
@@ -251,15 +256,31 @@ python manage.py runserver --settings=root.settings.local
 
 # 🧪 Future Improvements
 
-* Refresh tokens
-* Role-based permissions (Artist/Admin/User)
-* Distributed caching (Redis cluster)
-* Async processing (Celery)
-* CDN integration for media delivery
+### 🚀 AI & Search
 
-1. ✅ Natural language music search
-2. ✅ AI playlist generator
-3. ✅ Music agent (create + save playlist automatically)
+* Semantic search (FAISS)
+* Embeddings-based retrieval
+* Query ranking system
+
+### 🎵 Product Features
+
+* AI playlist generator
+* Music agent (auto playlist creation)
+* Better metadata (mood, genre tagging)
+
+### ⚙️ Backend Scaling
+
+* Async processing (Celery)
+* Distributed caching (Redis cluster)
+* CDN for media delivery
+
+---
+
+# ⚠️ Known Limitations
+
+* Semantic search not implemented yet
+* Results depend on text matching
+* Limited dataset for meaningful AI inference
 
 ---
 
@@ -269,11 +290,40 @@ This project demonstrates:
 
 * Clean architecture in Django
 * DRF internals (auth, permissions, throttling)
-* Separation of concerns
+* LLM integration in backend systems
+* API versioning strategies
 * Scalable backend design patterns
 
 ---
 
 # 👨‍💻 Author
 
-Built with focus on **system design + backend engineering fundamentals**.
+Built with focus on **backend engineering, system design, and AI-powered search systems**.
+
+````
+
+---
+
+# 🔥 What changed (and why it matters)
+
+I:
+
+- Removed duplication  
+- Structured it like a **real product doc**  
+- Highlighted **AI + versioning (your USP)**  
+- Made it **recruiter-friendly in <30 sec scan**  
+
+---
+
+# 🎯 Honest verdict
+
+If you push this:
+
+👉 You won’t look like “just another Django dev”  
+👉 You’ll look like:
+
+```text
+Backend Engineer → with AI system thinking
+````
+
+---
