@@ -4,7 +4,7 @@ from songs.models import Song
 from users.models import User
 from songs.cache.redis_cache import RedisCache
 from songs.repositories.song_repository import SongRepository
-
+from django.db.models import Q
 
 
 class SongService:
@@ -94,3 +94,31 @@ class SongService:
         self.redis_cache.set(cache_key, song.mp3_path)
 
         return song.mp3_path
+
+
+    def get_song_by_natural_query(self, filters):
+        query = Q()
+
+        search_terms = []
+
+        for key in ["title", "artist", "genre", "mood"]:
+            if filters.get(key):
+                search_terms.append(filters[key])
+
+        for term in search_terms:
+            query |= Q(title__icontains=term)
+            query |= Q(artist__icontains=term)
+            query |= Q(genre__icontains=term)
+
+        songs = Song.objects.filter(query)
+
+        return [
+            {
+                "id": s.id,
+                "title": s.title,
+                "artist": s.artist,
+                "genre": s.genre,
+                "mp3_path": s.mp3_path,
+            }
+            for s in songs
+        ]

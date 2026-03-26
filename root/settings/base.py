@@ -153,9 +153,10 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.AnonRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '10/min',
-        'anon': '5/min'
-    }
+        'user': '100/min',
+        'anon': '50/min'
+    },
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.URLPathVersioning',
 }
 
 LOGGING = {
