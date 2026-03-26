@@ -54,7 +54,7 @@ def play_song(request, song_id):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def search_song(request):
-    song_name = request.query_params.get("title")
+    song_name = request.query_params.get("q")
 
     if not song_name:
         return Response(
